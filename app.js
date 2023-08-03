@@ -1,4 +1,3 @@
-//jshint esversion:6
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -16,16 +15,41 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost:27017/blogDB", {useNewUrlParser: true});
+const con1 = mongoose.createConnection("mongodb://localhost:27017/blogDB", {useNewUrlParser: true});
+const con2 = mongoose.createConnection("mongodb://127.0.0.1:27017/userDB", {useNewUrlParser: true});
 
-const postSchema = {
+
+
+const Post = con1.model("Post", new mongoose.Schema({
   title: String,
   content: String
-};
+}));
 
-const Post = mongoose.model("Post", postSchema);
+const User = con2.model("User", new mongoose.Schema({
+  email: String,
+  password: String
+}));
 
 app.get("/", function(req, res){
+
+  Post.find({}, function(err, posts){
+    res.render("sign");
+  });
+});
+
+app.get("/login",function(req,res){
+  res.render("login");
+});
+
+app.get("/register",function(req,res){
+  res.render("register");
+});
+
+app.get("/compose", function(req, res){
+  res.render("compose");
+});
+
+app.get("/home", function(req, res){
 
   Post.find({}, function(err, posts){
     res.render("home", {
@@ -33,10 +57,6 @@ app.get("/", function(req, res){
       posts: posts
       });
   });
-});
-
-app.get("/compose", function(req, res){
-  res.render("compose");
 });
 
 app.post("/compose", function(req, res){
@@ -48,8 +68,44 @@ app.post("/compose", function(req, res){
 
   post.save(function(err){
     if (!err){
-        res.redirect("/");
+      Post.find({}, function(err, posts){
+        res.render("home", {
+          startingContent: homeStartingContent,
+          posts: posts
+          });
+      });
     }
+  });
+});
+
+app.post("/register",function(req,res){
+  const newUser = new User({
+      email: req.body.username,
+      password :req.body.password
+  });
+  newUser.save();
+  Post.find({}, function(err, posts){
+    res.render("home", {
+      startingContent: homeStartingContent,
+      posts: posts
+      });
+  });
+});
+
+app.post("/login", function(req,res){
+  const username = req.body.username;
+  const password = req.body.password;
+
+  User.findOne({email:username})
+  .then((data)=>{
+      if(data){
+        Post.find({}, function(err, posts){
+          res.render("home", {
+            startingContent: homeStartingContent,
+            posts: posts
+            });
+        });
+      }
   });
 });
 
