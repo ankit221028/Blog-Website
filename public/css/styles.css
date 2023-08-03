@@ -2,7 +2,10 @@ html {
   min-height: 100%;
   position: relative;
 }
-
+.centered {
+  padding-top: 200px;
+  text-align: center;
+}
 .container-fluid {
     padding-top: 70px;
     padding-bottom: 70px;
